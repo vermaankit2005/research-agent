@@ -1,0 +1,20 @@
+# Environment / secrets
+.env
+.env.*
+
+# Virtual environment
+.venv/
+venv/
+
+# IDE
+.idea/
+.junie/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Misc
+*.stackdump

@@ -1,0 +1,11 @@
+# --- Core graph + LLM ---
+langgraph>=0.2.60
+langchain-core>=0.3.28
+langchain-groq>=0.2.3        # ChatGroq (qwen/qwen3-32b)
+
+# --- Web research tool ---
+langchain-tavily>=0.1.0      # Tavily search (TavilySearch)
+
+# --- Config / env ---
+python-dotenv>=1.0.1
+pydantic>=2.10.0             # state + structured-output models
