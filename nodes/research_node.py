@@ -1,22 +1,22 @@
 from langchain.agents import create_agent
 from langchain_core.messages import SystemMessage, HumanMessage
 
-from models.ResearchResults import ResearchResults
-from models.ResearchState import ResearchState
+from models.search_results import SearchResultsOutput
+from models.research_agent_state import ResearchState
 from tools.llm import get_llm_with_structured_output, CONFIG, get_llm
 from tools.web_search import web_search
 
 TOOLS = {"web_search": web_search}
-MAX_TOOL_LOOPS = 5
+MAX_TOOL_LOOPS = 1
 
 
-def research_node(state: ResearchState) -> ResearchState:
+def research_node(state: ResearchState, topic: str, sub_topic: str) -> ResearchState:
     """ Researches each pending sub-topic and produces structured research results."""
-    topic = state["topic"]
-    sub_topics = state["research_sub_topics"].sub_topics
-
-    pending = [st for st in sub_topics if st.status == "pending"]
-    sub_topic_text = pending[0].research_sub_topic
+    # topic = state["topic"]
+    # sub_topics = state["research_sub_topics"].sub_topics
+    #
+    # pending = [st for st in sub_topics if st.status == "pending"]
+    # sub_topic_text = pending[0].sub_topic
 
     # ---------- Phase 1: gather information using tools ----------
     research_system_prompt = """
@@ -37,7 +37,7 @@ def research_node(state: ResearchState) -> ResearchState:
 
     research_prompt = f"""
     Overall research topic: {topic}
-    Sub-topic to research: {sub_topic_text}
+    Sub-topic to research: {sub_topic}
     """
 
     agent = create_agent(get_llm(), tools=list(TOOLS.values()))
@@ -54,7 +54,7 @@ def research_node(state: ResearchState) -> ResearchState:
     {
         "research_results": [
             {
-                "research_sub_topic": "The sub-topic",
+                "search_sub_topic": "The sub-topic",
                 "research_content": "The research content in markdown format",
                 "sources": ["The sources used for the research"]
             }
@@ -62,29 +62,29 @@ def research_node(state: ResearchState) -> ResearchState:
     }
     """
 
-    formatter = get_llm_with_structured_output(ResearchResults)
+    formatter = get_llm_with_structured_output(SearchResultsOutput)
     response = formatter.invoke(
         [SystemMessage(format_system_prompt), HumanMessage(
-            f"research_sub_topic: {sub_topic_text} \n Final Findings: {final_findings["messages"][-1].content}")],
+            f"research_sub_topic: {sub_topic} \n Final Findings: {final_findings["messages"][-1].content}")],
         config=CONFIG,
     )
 
     for i, result in enumerate(response.research_results):
-        print(f"{i + 1}. {result.research_sub_topic} — {len(result.sources)} source(s) \n")
+        print(f"{i + 1}. {result.search_sub_topic} — {len(result.sources)} source(s) \n")
 
     return {"research_results": response}
 
 
 if __name__ == "__main__":
-    from models.ResearchSubTopics import ResearchSubTopic, ResearchSubTopics
+    from models.sub_topics_output import SubTopicItemOutput, SubTopicsOutput
 
     test_state = {
         "topic": "Gen AI",
-        "research_sub_topics": ResearchSubTopics(sub_topics=[
-            ResearchSubTopic(research_sub_topic="Transformer architecture"),
-            ResearchSubTopic(research_sub_topic="Retrieval-Augmented Generation (RAG)"),
+        "research_sub_topics": SubTopicsOutput(sub_topics=[
+            SubTopicItemOutput(sub_topic="Transformer architecture"),
+            SubTopicItemOutput(sub_topic="Retrieval-Augmented Generation (RAG)"),
         ]),
     }
-    final_state = research_node(test_state)
+    final_state = research_node(test_state, "Gen AI", "Transformer architecture")
     for i, result in enumerate(final_state["research_results"]):
         print(f"{i + 1}. {result}\n")
