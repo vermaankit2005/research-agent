@@ -2,7 +2,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from models.search_results import SearchResultsOutput
-from models.research_agent_state import ResearchState
+from models.research_agent_state import ResearchState, pick_next_pending_sub_topic
 from tools.llm import get_llm_with_structured_output, CONFIG, get_llm
 from tools.web_search import web_search
 
@@ -10,13 +10,10 @@ TOOLS = {"web_search": web_search}
 MAX_TOOL_LOOPS = 1
 
 
-def research_node(state: ResearchState, topic: str, sub_topic: str) -> ResearchState:
-    """ Researches each pending sub-topic and produces structured research results."""
-    # topic = state["topic"]
-    # sub_topics = state["research_sub_topics"].sub_topics
-    #
-    # pending = [st for st in sub_topics if st.status == "pending"]
-    # sub_topic_text = pending[0].sub_topic
+def research_node(state: ResearchState) -> ResearchState:
+
+    topic = state["topic"]
+    sub_topic = pick_next_pending_sub_topic(state)
 
     # ---------- Phase 1: gather information using tools ----------
     research_system_prompt = """

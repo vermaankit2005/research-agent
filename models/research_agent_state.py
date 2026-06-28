@@ -10,3 +10,10 @@ class ResearchState(TypedDict):
     research_sub_topics: SubTopicsOutput
     research_results: SearchResultsOutput
     final_report: FinalReport
+
+def pick_next_pending_sub_topic(state: ResearchState) -> str:
+    """Pick the next pending sub-topic to research"""
+    pending = [st for st in state["research_sub_topics"].sub_topics if st.status == "pending"]
+    if not pending:
+        return None
+    return pending[0].sub_topic

@@ -26,16 +26,16 @@ def planning_node(state: ResearchState) -> ResearchState:
     }
     """
 
-    prompt = f"""
+    user_prompt = f"""
     Given the topic below break it down into sub-topics, which can be researched independently.
     Given topic: {original_topic}
     """
 
     llm = get_llm_with_structured_output(SubTopicsOutput)
-    response = llm.invoke([SystemMessage(system_prompt), HumanMessage(prompt)], config=CONFIG)
+    response = llm.invoke([SystemMessage(system_prompt), HumanMessage(user_prompt)], config=CONFIG)
     print(response)
-    for i, topic in enumerate(response.sub_topics):
-        print(f"{i + 1}. {topic.sub_topic, topic.search_mode}")
+    for i, sub_topic in enumerate(response.sub_topics):
+        print(f"{i + 1}. {sub_topic.sub_topic, sub_topic.search_mode}")
 
     return {"research_sub_topics": response}
 
