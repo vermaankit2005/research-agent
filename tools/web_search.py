@@ -1,12 +1,14 @@
+from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.tools import tool
-from langchain_tavily import TavilySearch
 
-search_tool = TavilySearch(
-    max_results=1,
-    topic="general",
-    include_images=False,
-    search_depth="advanced"
-)
+# search_tool = TavilySearch(
+#     max_results=1,
+#     topic="general",
+#     include_images=False,
+#     search_depth="advanced"
+# )
+
+search_tool = DuckDuckGoSearchRun()
 
 
 @tool

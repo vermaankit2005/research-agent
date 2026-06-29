@@ -1,19 +1,24 @@
-from typing import TypedDict
+from typing import Annotated, TypedDict
 
-from models.final_report import FinalReport
+from models.final_report import FinalReportWrapper
 from models.search_results import SearchResultsOutput
 from models.sub_topics_output import SubTopicsOutput
+
+
+def merge_research_results(
+        current: SearchResultsOutput | None,
+        update: SearchResultsOutput,
+) -> SearchResultsOutput:
+    """Reducer: accumulate each sub-topic's findings instead of overwriting."""
+    if current is None:
+        return update
+    return SearchResultsOutput(
+        research_results=current.research_results + update.research_results
+    )
 
 
 class ResearchState(TypedDict):
     topic: str
     research_sub_topics: SubTopicsOutput
-    research_results: SearchResultsOutput
-    final_report: FinalReport
-
-def pick_next_pending_sub_topic(state: ResearchState) -> str:
-    """Pick the next pending sub-topic to research"""
-    pending = [st for st in state["research_sub_topics"].sub_topics if st.status == "pending"]
-    if not pending:
-        return None
-    return pending[0].sub_topic
+    research_results: Annotated[SearchResultsOutput, merge_research_results]
+    final_report: FinalReportWrapper

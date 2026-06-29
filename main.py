@@ -1,16 +1,14 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from agents.research_graph import create_research_graph
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+CONFIG = {"configurable": {"thread_id": "user_ankit"}}
+
+def main():
+    graph = create_research_graph()
+    # The starting state. Only "topic" is filled in; the nodes fill the rest.
+    initial_state = {"topic": "Cricket"}
+    final_state = graph.invoke(initial_state, config=CONFIG)
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+    main()

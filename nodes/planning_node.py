@@ -2,13 +2,13 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 from models.research_agent_state import ResearchState
 from models.sub_topics_output import SubTopicsOutput
-from tools.llm import get_llm_with_structured_output, CONFIG
+from tools.llm import get_llm_with_structured_output
 
 
 def planning_node(state: ResearchState) -> ResearchState:
     """ Breaks the given topic into sub-topics, which can be researched independently"""
     original_topic = state["topic"]
-
+    print(f"========== Planning started for the topic {original_topic} ==========")
     system_prompt = """
     You are an expert research strategist specializing in comprehensive topic decomposition. Your role is to analyze complex research topics and systematically break them down into clearly defined, independently researchable sub-topics that enable thorough investigation.
 
@@ -31,10 +31,9 @@ def planning_node(state: ResearchState) -> ResearchState:
     - Format: Valid JSON object
     - Search Mode: Currently set to "websearch" for all sub-topics
     - Status: Initialize all as "pending"
-    - Maximum sub-topics: 3
+    - **Maximum sub-topics: 2**
 
     ## OUTPUT JSON Structure
-    ```json
     {
         "sub_topics": [
             {
@@ -52,8 +51,9 @@ def planning_node(state: ResearchState) -> ResearchState:
     """
 
     llm = get_llm_with_structured_output(SubTopicsOutput)
-    response = llm.invoke([SystemMessage(system_prompt), HumanMessage(user_prompt)], config=CONFIG)
-    print(response)
+    response = llm.invoke([SystemMessage(system_prompt), HumanMessage(user_prompt)])
+
+    print(f"The original topic is: {original_topic}, was broken down into {len(response.sub_topics)} sub-topics")
     for i, sub_topic in enumerate(response.sub_topics):
         print(f"{i + 1}. {sub_topic.sub_topic, sub_topic.search_mode}")
 
@@ -61,5 +61,6 @@ def planning_node(state: ResearchState) -> ResearchState:
 
 
 if __name__ == "__main__":
+    test_config = {"configurable": {"thread_id": "test"}}
     final_state = planning_node({"topic": "Gen AI"})
     print(final_state)
