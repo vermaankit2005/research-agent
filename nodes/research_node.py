@@ -1,8 +1,8 @@
 from langchain.agents import create_agent
 from langchain_core.messages import SystemMessage, HumanMessage
 
-from models.search_results import SearchResultsOutput
 from models.research_agent_state import ResearchState, pick_next_pending_sub_topic
+from models.search_results import SearchResultsOutput
 from tools.llm import get_llm_with_structured_output, CONFIG, get_llm
 from tools.web_search import web_search
 
@@ -11,25 +11,31 @@ MAX_TOOL_LOOPS = 1
 
 
 def research_node(state: ResearchState) -> ResearchState:
-
     topic = state["topic"]
     sub_topic = pick_next_pending_sub_topic(state)
 
     # ---------- Phase 1: gather information using tools ----------
     research_system_prompt = """
-    You are a meticulous research analyst. Research the given sub-topic thoroughly.
-    Use the web_search tool whenever you need up-to-date or factual information.
-    Call web_search as many times as needed with focused queries, then write up your
-    findings. 
-    The research should be comprehensive and detailed with proper formatting in simple language, 
-    without compromising on accuracy.
-    The research should be unbiased and objective.
-    
-    Be factual and specific; do NOT invent facts or sources. When you are
-    done researching, respond with your findings in plain prose, and list every URL /
-    source you actually relied on.
-    
-    MAX 500 words
+    You are a meticulous research analyst. Your task is to thoroughly investigate the given sub-topic and produce a comprehensive, well-structured research summary.
+
+    ## Research Process
+    - Use the web_search tool for any factual or up-to-date information
+    - Execute multiple focused searches to ensure depth and coverage
+    - Cross-reference information when possible for accuracy
+
+    ## Writing Guidelines
+    - Use simple, clear language without sacrificing accuracy
+    - Maintain strict objectivity and neutrality
+    - Be factual and specific — do NOT fabricate facts or sources
+    - Structure findings with markdown formatting for readability
+
+    ## Source Requirements
+    - List ONLY URLs/sources you actually used
+    - Do not cite sources you haven't directly referenced
+
+    ## Constraints
+    - Maximum 500 words
+    - Plain prose with markdown formatting
     """
 
     research_prompt = f"""
@@ -44,16 +50,21 @@ def research_node(state: ResearchState) -> ResearchState:
 
     # ---------- Phase 2: format the gathered research into the schema ----------
     format_system_prompt = """
-    You are given a research conversation. Convert the final findings into the required
-    structured format.
-    
-    OUTPUT JSON FORMAT:
+    You are given a research conversation. Extract the final findings and convert them into the required structured format.
+
+    ## Instructions
+    - Identify each sub-topic's research findings from the conversation
+    - Format the research content in markdown
+    - Include all cited sources
+    - Output must be valid JSON only
+
+    ## OUTPUT JSON FORMAT
     {
         "research_results": [
             {
-                "search_sub_topic": "The sub-topic",
-                "research_content": "The research content in markdown format",
-                "sources": ["The sources used for the research"]
+                "search_sub_topic": "The exact sub-topic name",
+                "research_content": "The summarized findings in markdown format",
+                "sources": ["List of all sources referenced"]
             }
         ]
     }
