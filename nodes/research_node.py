@@ -1,10 +1,10 @@
 from langchain.agents import create_agent
 from langchain.agents.middleware import ModelCallLimitMiddleware
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
 
 from models.research_agent_state import ResearchState
-from models.search_results import SearchResultsOutput
-from tools.llm import get_llm_with_structured_output, get_llm
+from models.search_results import SearchResultsOutput, SearchResultItemOutput
+from tools.llm import get_llm
 from tools.web_search import web_search
 from utils import pick_next_pending_sub_topic
 
@@ -56,50 +56,23 @@ def research_node(state: ResearchState) -> ResearchState:
         chunk["messages"][-1].pretty_print()
         final_findings = chunk
 
-    # ---------- Phase 2: format the gathered research into the schema ----------
+    # ---------- Phase 2: persist the raw findings for the summary node ----------
+    # No per-subtopic structuring LLM call here. The raw search evidence is stored
+    # as-is and synthesized once, later, by summary_node (the single reduce step).
 
-    print(f"========== Formatting Findings for Subtopic ==========")
+    print(f"========== Collecting raw findings for Subtopic ==========")
 
-    format_system_prompt = """
-    You are given a research conversation. Extract the findings and convert them into the required structured format.
-
-    This is a STRUCTURING step, not a summarization step.
-
-    ## Instructions
-    - Identify each sub-topic's research findings from the conversation
-    - Preserve ALL facts, statistics, dates, names, and details — do NOT condense, shorten, or summarize the content
-    - Reorganize the gathered material into clean markdown; reword only for clarity, never to compress
-    - Include every cited source
-    - Output must be valid JSON only
-
-    ## OUTPUT JSON FORMAT
-    {
-        "research_results": [
-            {
-                "search_sub_topic": "The exact sub-topic name",
-                "research_content": "The full, detailed findings in markdown format",
-                "sources": ["List of all sources referenced"]
-            }
-        ]
-    }
-    """
-
-    formatter = get_llm_with_structured_output(SearchResultsOutput)
-    conversation = "\n\n".join(
-        f"[{m.type}] {m.content}"
+    raw_findings = "\n\n".join(
+        m.content
         for m in final_findings["messages"]
-        if m.content
+        if isinstance(m, (AIMessage, ToolMessage)) and m.content
     )
-    response = formatter.invoke([
-        SystemMessage(format_system_prompt),
-        HumanMessage(f"research_sub_topic: {sub_topic}\n\nResearch conversation:\n{conversation}"),
+
+    response = SearchResultsOutput(research_results=[
+        SearchResultItemOutput(search_sub_topic=sub_topic, research_content=raw_findings)
     ])
 
-    for i, result in enumerate(response.research_results):
-        if result.research_content:
-            print(f"**SubTopic Content**:\n\n{result.research_content}")
-        if result.sources:
-            print(f"SubTopic Sources:\n\n {result.sources}")
+    print(f"**SubTopic raw findings**:\n\n{raw_findings}")
 
     ## Marking the topic as done.
     for st in state["research_sub_topics"].sub_topics:

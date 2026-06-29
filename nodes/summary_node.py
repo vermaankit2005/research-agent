@@ -11,11 +11,11 @@ def summary_node(state: ResearchState):
     print("========== Summary node started ==========")
 
     summary_content = []
-    summary_sources = []
 
     for research_result in state["research_results"].research_results:
-        summary_content.append([research_result.research_content])
-        summary_sources.append([research_result.sources])
+        summary_content.append(
+            f"## Sub-topic: {research_result.search_sub_topic}\n\n{research_result.research_content}"
+        )
 
     system_prompt = """
     You are an expert research analyst.
@@ -34,11 +34,13 @@ def summary_node(state: ResearchState):
     7. Write in a professional report style.
     8. The final report should be approximately 1500-2500 words.
     9. Use markdown headings and subheadings.
-    10. End with:
+    10. The content is RAW research material (web search snippets and notes). Extract any
+        URLs or named sources that appear within it and use them for the References section.
+    11. End with:
        - Key Findings
        - Challenges
        - Future Trends
-       - References (using the provided sources)
+       - References (extracted from the research content)
     OUTPUT FORMAT:
     {
         "report": {
@@ -49,13 +51,9 @@ def summary_node(state: ResearchState):
     """
 
     user_prompt = f"""
-    Summerize the following content:
-    
-    Content:
-    {summary_content}
-    
-    Sources:
-    {summary_sources}
+    Synthesize the following raw research material into the report:
+
+    {"\n\n".join(summary_content)}
     """
 
     llm = get_llm_with_structured_output(FinalReportWrapper)
