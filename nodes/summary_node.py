@@ -25,11 +25,20 @@ def summary_node(state: ResearchState):
     Instructions:
     1. Synthesize across sub-topics into a single narrative; explain how they relate.
     2. Merge overlapping points and remove duplicates, but preserve every unique fact, statistic, and technical detail.
-    3. Do not shorten unnecessarily; aim for roughly 1000-1500 words.
+    3. Do not shorten unnecessarily; aim for roughly 1500-2000 words.
     4. Write in a professional report style using markdown headings and subheadings.
     5. End with these sections: Key Findings, Challenges, Future Trends, References.
     6. Populate the `content` field with the full markdown report.
     7. Populate the `sources` field with the URLs/named sources that appear in the digests — use ONLY sources present in the material; never invent any.
+    8. Language: Strictly in ENGLISH only
+    OUTPUT FORMAT:
+    {
+        "report": {
+            "content": "Summary of the research content",
+            "sources": ["The sources used for the research"]
+        }
+    }
+    
     """
 
     user_prompt = f"""

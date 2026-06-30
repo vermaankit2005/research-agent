@@ -79,6 +79,7 @@ def research_node(state: ResearchState) -> ResearchState:
     - Drop only noise: tool boilerplate, duplicates, and irrelevant text.
     - Do NOT write report prose, intros, or conclusions — this is evidence, not a report.
     - If the material is thin or empty, state plainly what is missing. Never invent anything.
+    - Language: Strictly in ENGLISH only
     """
 
     digest = get_llm().invoke([

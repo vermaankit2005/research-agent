@@ -9,11 +9,21 @@ load_dotenv()
 
 @lru_cache
 def get_llm():
-    return ChatOpenAI(
+    llm = ChatOpenAI(
         model="deepseek/deepseek-v4-flash",
         temperature=0.4,
         base_url="https://openrouter.ai/api/v1",
-        api_key=os.environ["OPENROUTER_API_KEY"])
+        api_key=os.environ["OPENROUTER_API_KEY"],
+    )
+
+    return llm.bind(
+        extra_body={
+            "provider": {
+                "order": ["baidu/fp8"],
+                "allow_fallbacks": False,
+            }
+        }
+    )
 
 # @lru_cache
 # def get_llm():

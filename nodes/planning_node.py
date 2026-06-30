@@ -2,7 +2,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 from models.research_agent_state import ResearchState
 from models.sub_topics_output import SubTopicsOutput
-from tools.llm import get_llm_with_structured_output
+from tools.llm import get_llm_with_structured_output, get_llm
 
 
 def planning_node(state: ResearchState) -> ResearchState:
@@ -49,6 +49,9 @@ def planning_node(state: ResearchState) -> ResearchState:
     Given the topic below break it down into sub-topics, which can be researched independently.
     Given topic: {original_topic}
     """
+    llm_test = get_llm()
+    print(llm_test.invoke([SystemMessage(content="You are assistant"), HumanMessage(content="Say hello")]))
+
 
     llm = get_llm_with_structured_output(SubTopicsOutput)
     response = llm.invoke([SystemMessage(system_prompt), HumanMessage(user_prompt)])
