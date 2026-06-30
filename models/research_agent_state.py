@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Annotated, TypedDict
 
 from models.final_report import FinalReportWrapper
@@ -17,8 +18,25 @@ def merge_research_results(
     )
 
 
+def merge_sub_topics(
+        current: SubTopicsOutput | None,
+        update: SubTopicsOutput,
+) -> SubTopicsOutput:
+    """Reducer: OR-merge each branch's 'done' flag so parallel writes don't
+    clobber each other. A branch only ever marks its own sub-topic done; we
+    trust the update only for what it reports done and keep everything else."""
+    if current is None:
+        return update
+    done = {st.sub_topic for st in update.sub_topics if st.status == "done"}
+    merged = deepcopy(current)
+    for st in merged.sub_topics:
+        if st.sub_topic in done:
+            st.status = "done"
+    return merged
+
+
 class ResearchState(TypedDict):
     topic: str
-    research_sub_topics: SubTopicsOutput
+    research_sub_topics: Annotated[SubTopicsOutput, merge_sub_topics]
     research_results: Annotated[SearchResultsOutput, merge_research_results]
     final_report: FinalReportWrapper

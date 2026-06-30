@@ -1,6 +1,7 @@
 # Let's create a research graph here.
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, END
+from langgraph.types import Send
 
 from models.research_agent_state import ResearchState
 from nodes.planning_node import planning_node
@@ -9,12 +10,18 @@ from nodes.summary_node import summary_node
 from utils import pick_next_pending_sub_topic
 
 
-def should_continue(state: ResearchState) -> str:
-    """Determine if we should continue to the next sub-topic or end"""
-    pending = pick_next_pending_sub_topic(state)
-    if not pending:
-        return "summary"
-    return "research"
+def fan_out_research_nodes(state: ResearchState):
+    """Fan out subtopics to research node parallely """
+    return [
+        Send("research", {
+            "topic": state["topic"],
+            "research_sub_topics": state["research_sub_topics"],
+            "current_sub_topic": s.sub_topic,
+        })
+        for s in state["research_sub_topics"].sub_topics
+        if s.status == "pending"
+    ]
+
 
 def create_research_graph():
     graph = StateGraph(ResearchState)
@@ -26,8 +33,8 @@ def create_research_graph():
 
     # Define edges
     graph.set_entry_point("planning")
-    graph.add_edge("planning", "research")
-    graph.add_conditional_edges("research", should_continue, {"research": "research", "summary": "summary"})
+    graph.add_conditional_edges("planning", fan_out_research_nodes, ["research"])
+    graph.add_edge("research", "summary")
     graph.add_edge("summary", END)
 
     # The checkpointer saves the state after every step, so the graph can

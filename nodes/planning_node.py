@@ -31,7 +31,7 @@ def planning_node(state: ResearchState) -> ResearchState:
     - Format: Valid JSON object
     - Search Mode: Currently set to "websearch" for all sub-topics
     - Status: Initialize all as "pending"
-    - **Maximum sub-topics: 2**
+    - **Maximum sub-topics: 3**
 
     ## OUTPUT JSON Structure
     {

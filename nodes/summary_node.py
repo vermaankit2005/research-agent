@@ -18,40 +18,22 @@ def summary_node(state: ResearchState):
         )
 
     system_prompt = """
-    You are an expert research analyst.
+    You are an expert research analyst writing the final report.
 
-    You have been provided with research findings collected from multiple subtopics.
-    
-    Your task is to produce a comprehensive research report, NOT a brief summary.
-    
+    You are given clean, per-sub-topic evidence digests (already condensed from web research). Your job is the synthesis step: combine them into ONE comprehensive, coherent report — not a brief summary, and not a list of separate sub-topic blurbs.
+
     Instructions:
-    1. Read all research results carefully.
-    2. Combine overlapping information into a coherent narrative.
-    3. Preserve important facts, statistics, examples, and technical details.
-    4. Do not shorten the content unnecessarily.
-    5. Explain relationships between different subtopics where applicable.
-    6. Remove duplicate information while keeping unique insights.
-    7. Write in a professional report style.
-    8. The final report should be approximately 1500-2500 words.
-    9. Use markdown headings and subheadings.
-    10. The content is RAW research material (web search snippets and notes). Extract any
-        URLs or named sources that appear within it and use them for the References section.
-    11. End with:
-       - Key Findings
-       - Challenges
-       - Future Trends
-       - References (extracted from the research content)
-    OUTPUT FORMAT:
-    {
-        "report": {
-            "content": "Summary of the research content",
-            "sources": ["The sources used for the research"]
-        }
-    }
+    1. Synthesize across sub-topics into a single narrative; explain how they relate.
+    2. Merge overlapping points and remove duplicates, but preserve every unique fact, statistic, and technical detail.
+    3. Do not shorten unnecessarily; aim for roughly 1000-1500 words.
+    4. Write in a professional report style using markdown headings and subheadings.
+    5. End with these sections: Key Findings, Challenges, Future Trends, References.
+    6. Populate the `content` field with the full markdown report.
+    7. Populate the `sources` field with the URLs/named sources that appear in the digests — use ONLY sources present in the material; never invent any.
     """
 
     user_prompt = f"""
-    Synthesize the following raw research material into the report:
+    Synthesize the following per-sub-topic evidence digests into the final report:
 
     {"\n\n".join(summary_content)}
     """
@@ -77,30 +59,24 @@ if __name__ == "__main__":
             SearchResultItemOutput(
                 search_sub_topic="What is Generative AI",
                 research_content="Generative AI (Gen AI) refers to artificial intelligence models that can create new content such as text, images, audio, video, and code based on patterns learned from large datasets.",
-                sources=["https://openai.com/research", "https://ai.google/discover/generative-ai"],
             ),
             SearchResultItemOutput(
                 search_sub_topic="Large Language Models",
                 research_content="Large Language Models (LLMs) such as GPT, Gemini, and Llama are trained on vast amounts of text data and can perform tasks including summarization, translation, question answering, and code generation.",
-                sources=["https://openai.com", "https://ai.meta.com/llama",
-                         "https://deepmind.google/technologies/gemini"],
+
             ),
             SearchResultItemOutput(
                 search_sub_topic="Enterprise use cases",
                 research_content="Common enterprise use cases for Gen AI include customer support chatbots, document summarization, knowledge management, software development assistance, content creation, and workflow automation.",
-                sources=[
-                    "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-economic-potential-of-generative-ai",
-                    "https://www.gartner.com/en/topics/generative-ai"],
+
             ),
             SearchResultItemOutput(
                 search_sub_topic="Retrieval-Augmented Generation",
                 research_content="Retrieval-Augmented Generation (RAG) combines information retrieval with LLMs, allowing models to generate responses grounded in external knowledge bases and reducing hallucinations.",
-                sources=["https://arxiv.org/abs/2005.11401", "https://python.langchain.com/docs/concepts/rag/"],
             ),
             SearchResultItemOutput(
                 search_sub_topic="Challenges",
                 research_content="Key challenges in Gen AI include hallucinations, bias, data privacy, copyright concerns, model evaluation, and ensuring responsible AI deployment through governance and human oversight.",
-                sources=["https://www.nist.gov/itl/ai-risk-management-framework", "https://www.oecd.org/ai/"],
             ),
         ]),
     }
