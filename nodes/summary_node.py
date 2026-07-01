@@ -2,6 +2,7 @@ import asyncio
 
 from langchain_core.messages import SystemMessage, HumanMessage
 from rich.console import Console
+from rich.live import Live
 
 from models.research_agent_state import ResearchState
 from tools.llm import get_llm
@@ -45,12 +46,12 @@ async def summary_node(state: ResearchState):
     """
 
     llm = get_llm()
-    response = await llm.ainvoke([SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)])
-
-    print("========== Summary node completed ==========")
-    # Let's print the final output in the formatted way
-    console = Console()
-    console.print(f"Summary for the topic {state['topic']}: \n{response.content}")
+    full_text = ""
+    chunk_generator = llm.astream([SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)])
+    with Live(console=Console(), refresh_per_second=100) as live:
+        async for chunk in chunk_generator:
+            full_text += chunk.content
+            live.update(full_text, refresh=True)
 
 
 if __name__ == "__main__":
