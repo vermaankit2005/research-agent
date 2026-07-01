@@ -1,20 +1,21 @@
-from langchain_community.tools import DuckDuckGoSearchRun
+from dotenv import load_dotenv
 from langchain_core.tools import tool
+from langchain_tavily import TavilySearch
 
-# search_tool = TavilySearch(
-#     max_results=1,
-#     topic="general",
-#     include_images=False,
-#     search_depth="advanced"
-# )
+load_dotenv()
 
-search_tool = DuckDuckGoSearchRun()
+search_tool = TavilySearch(
+    max_results=3,
+    topic="general",
+    include_images=False,
+    search_depth="basic"
+)
 
 
 @tool
-def web_search(query: str) -> str:
+async def web_search(query: str) -> str:
     """Search the web for the given query and return the results.
     Args:
         query: The search query string
     """
-    return search_tool.invoke({"query": query})
+    return await search_tool.ainvoke({"query": query})

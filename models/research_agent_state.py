@@ -1,7 +1,6 @@
 from copy import deepcopy
 from typing import Annotated, TypedDict
 
-from models.final_report import FinalReportWrapper
 from models.search_results import SearchResultsOutput
 from models.sub_topics_output import SubTopicsOutput
 
@@ -39,4 +38,4 @@ class ResearchState(TypedDict):
     topic: str
     research_sub_topics: Annotated[SubTopicsOutput, merge_sub_topics]
     research_results: Annotated[SearchResultsOutput, merge_research_results]
-    final_report: FinalReportWrapper
+    final_report: str

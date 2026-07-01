@@ -13,7 +13,7 @@ tools = [web_search]
 MAX_TOOL_LOOPS = 3
 
 
-def research_node(state: ResearchState) -> ResearchState:
+async def research_node(state: ResearchState) -> ResearchState:
     topic = state["topic"]
     sub_topic = state["current_sub_topic"]
 
@@ -58,31 +58,47 @@ def research_node(state: ResearchState) -> ResearchState:
                          middleware=[ModelCallLimitMiddleware(thread_limit=MAX_TOOL_LOOPS + 1, exit_behavior="end")])
     messages = [SystemMessage(research_system_prompt), HumanMessage(research_prompt)]
 
-    final_findings = None
-    for chunk in agent.stream({"messages": messages}, stream_mode="values"):
+    findings = None
+    async for chunk in agent.astream({"messages": messages}, stream_mode="values"):
         chunk["messages"][-1].pretty_print()
-        final_findings = chunk
+        findings = chunk
 
     # ---------- Phase 2: map step — condense raw evidence into a clean digest ----------
     print(f"========== Condensing findings for sub-topic ==========")
 
     gathered = "\n\n".join(
         m.content
-        for m in final_findings["messages"]
+        for m in findings["messages"]
         if isinstance(m, (AIMessage, ToolMessage)) and m.content
     )
 
     digest_prompt = """
-    You condense raw web-search output into a clean, faithful evidence digest for one sub-topic.
+    You are a compression step. Turn raw, messy web-search output for ONE sub-topic into a compact, 
+    faithful evidence digest that a later synthesis step will merge with the digests of other sub-topics.
 
-    - Keep EVERY concrete detail: facts, numbers, dates, names, quotes, and the sources used.
-    - Drop only noise: tool boilerplate, duplicates, and irrelevant text.
-    - Do NOT write report prose, intros, or conclusions — this is evidence, not a report.
-    - If the material is thin or empty, state plainly what is missing. Never invent anything.
-    - Language: Strictly in ENGLISH only
+    ## Goal
+    Maximize information density: keep the signal, cut the bulk. 
+    The final report is built from THIS digest, not the raw output — so it must stand on its own.
+
+    ## Keep (most important first)
+    - Hard facts that carry meaning: statistics, dates, named entities, definitions, key quotes, and cause/effect claims.
+    - The source (URL or name) each non-obvious claim came from, attached to that claim.
+    - Points of agreement, and — explicitly — any conflicts or contradictions between sources.
+
+    ## Drop
+    - Tool boilerplate, navigation cruft, ads, and repeated/near-duplicate statements.
+    - Hedging, filler, and generic background a knowledgeable reader already has.
+    - Anything you cannot tie back to the retrieved material.
+
+    ## Rules
+    - Be faithful: never add, infer, or embellish. If the material is thin, conflicting, or empty, say so plainly instead of padding.
+    - No report prose — no intro, no conclusion, no essay. Terse, information-dense lines or bullets.
+    - Deduplicate aggressively: each distinct fact appears once.
+    - Length: aim for ~250 words, hard cap ~350. If the raw material is genuinely sparse, be shorter — do NOT stretch to hit the target.
+    - Language: strictly ENGLISH.
     """
 
-    digest = get_llm().invoke([
+    digest = await get_llm().ainvoke([
         SystemMessage(digest_prompt),
         HumanMessage(
             f"Overall topic: {topic}\n"

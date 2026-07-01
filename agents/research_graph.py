@@ -7,7 +7,6 @@ from models.research_agent_state import ResearchState
 from nodes.planning_node import planning_node
 from nodes.research_node import research_node
 from nodes.summary_node import summary_node
-from utils import pick_next_pending_sub_topic
 
 
 def fan_out_research_nodes(state: ResearchState):

@@ -1,13 +1,15 @@
-from langchain_core.messages import SystemMessage, HumanMessage
+import asyncio
 
-from models.final_report import FinalReportWrapper
+from langchain_core.messages import SystemMessage, HumanMessage
+from rich.console import Console
+
 from models.research_agent_state import ResearchState
-from tools.llm import get_llm_with_structured_output
+from tools.llm import get_llm
 
 
 # TODO: Need to see incase of a large number of sub-topics, how to handle the LLM context limit.
 # For now, we are assuming that the number of sub-topics is small enough to fit in the LLM context.
-def summary_node(state: ResearchState):
+async def summary_node(state: ResearchState):
     print("========== Summary node started ==========")
 
     summary_content = []
@@ -20,7 +22,9 @@ def summary_node(state: ResearchState):
     system_prompt = """
     You are an expert research analyst writing the final report.
 
-    You are given clean, per-sub-topic evidence digests (already condensed from web research). Your job is the synthesis step: combine them into ONE comprehensive, coherent report — not a brief summary, and not a list of separate sub-topic blurbs.
+    You are given clean, per-sub-topic evidence digests (already condensed from web research).
+    Your job is the synthesis step: combine them into ONE comprehensive, coherent report — not a brief summary, 
+    and not a list of separate sub-topic blurbs.
 
     Instructions:
     1. Synthesize across sub-topics into a single narrative; explain how they relate.
@@ -31,14 +35,7 @@ def summary_node(state: ResearchState):
     6. Populate the `content` field with the full markdown report.
     7. Populate the `sources` field with the URLs/named sources that appear in the digests — use ONLY sources present in the material; never invent any.
     8. Language: Strictly in ENGLISH only
-    OUTPUT FORMAT:
-    {
-        "report": {
-            "content": "Summary of the research content",
-            "sources": ["The sources used for the research"]
-        }
-    }
-    
+    9. Keep the language simple and easy to understand, avoiding unnecessary jargon.
     """
 
     user_prompt = f"""
@@ -47,15 +44,13 @@ def summary_node(state: ResearchState):
     {"\n\n".join(summary_content)}
     """
 
-    llm = get_llm_with_structured_output(FinalReportWrapper)
-    response = llm.invoke([SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)])
+    llm = get_llm()
+    response = await llm.ainvoke([SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)])
 
     print("========== Summary node completed ==========")
     # Let's print the final output in the formatted way
-    print(f"Summary for the topic {state['topic']}: \n{response.report.content}")
-    print(f"Sources used: {response.report.sources}")
-
-    return {"final_report": response}
+    console = Console()
+    console.print(f"Summary for the topic {state['topic']}: \n{response.content}")
 
 
 if __name__ == "__main__":
@@ -89,4 +84,4 @@ if __name__ == "__main__":
             ),
         ]),
     }
-    result = summary_node(state)
+    result = asyncio.run(summary_node(state))

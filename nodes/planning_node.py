@@ -1,3 +1,5 @@
+import asyncio
+
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from models.research_agent_state import ResearchState
@@ -5,12 +7,14 @@ from models.sub_topics_output import SubTopicsOutput
 from tools.llm import get_llm_with_structured_output, get_llm
 
 
-def planning_node(state: ResearchState) -> ResearchState:
+async def planning_node(state: ResearchState) -> ResearchState:
     """ Breaks the given topic into sub-topics, which can be researched independently"""
     original_topic = state["topic"]
     print(f"========== Planning started for the topic {original_topic} ==========")
     system_prompt = """
-    You are an expert research strategist specializing in comprehensive topic decomposition. Your role is to analyze complex research topics and systematically break them down into clearly defined, independently researchable sub-topics that enable thorough investigation.
+    You are an expert research strategist specializing in comprehensive topic decomposition. 
+    Your role is to analyze complex research topics and systematically break them down into clearly defined, 
+    independently researchable sub-topics that enable thorough investigation.
 
     ## Core Responsibilities
     - Deconstruct the given research topic into its fundamental components
@@ -31,7 +35,7 @@ def planning_node(state: ResearchState) -> ResearchState:
     - Format: Valid JSON object
     - Search Mode: Currently set to "websearch" for all sub-topics
     - Status: Initialize all as "pending"
-    - **Maximum sub-topics: 3**
+    - **Maximum sub-topics: 4**
 
     ## OUTPUT JSON Structure
     {
@@ -49,12 +53,10 @@ def planning_node(state: ResearchState) -> ResearchState:
     Given the topic below break it down into sub-topics, which can be researched independently.
     Given topic: {original_topic}
     """
-    llm_test = get_llm()
-    print(llm_test.invoke([SystemMessage(content="You are assistant"), HumanMessage(content="Say hello")]))
 
 
     llm = get_llm_with_structured_output(SubTopicsOutput)
-    response = llm.invoke([SystemMessage(system_prompt), HumanMessage(user_prompt)])
+    response = await llm.ainvoke([SystemMessage(system_prompt), HumanMessage(user_prompt)])
 
     print(f"The original topic is: {original_topic}, was broken down into {len(response.sub_topics)} sub-topics")
     for i, sub_topic in enumerate(response.sub_topics):
@@ -65,5 +67,5 @@ def planning_node(state: ResearchState) -> ResearchState:
 
 if __name__ == "__main__":
     test_config = {"configurable": {"thread_id": "test"}}
-    final_state = planning_node({"topic": "Gen AI"})
+    final_state = asyncio.run(planning_node({"topic": "Gen AI"}))
     print(final_state)

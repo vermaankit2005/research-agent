@@ -32,6 +32,3 @@ def get_llm():
 
 def get_llm_with_structured_output(schema):
     return get_llm().with_structured_output(schema, method="function_calling")
-
-def get_llm_with_tools(tools):
-    return get_llm().bind_tools(tools)

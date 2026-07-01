@@ -8,6 +8,5 @@ class SubTopicItemOutput(BaseModel):
     search_mode: Literal["websearch"] = "websearch"
     status: Literal["pending", "done"] = "pending"
 
-
 class SubTopicsOutput(BaseModel):
     sub_topics: list[SubTopicItemOutput]
